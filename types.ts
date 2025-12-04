@@ -7,8 +7,6 @@ export enum DeviceFrame {
 export interface AdConfig {
   productImage: string | null;
   generatedImage: string | null;
-  videoUrl: string | null;
-  outputType: 'image' | 'video';
   narrative: string;
   headline: string;
   ctaText: string;

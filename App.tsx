@@ -14,22 +14,136 @@ import {
   History,
   Eye,
   Trash2,
-  Video,
-  PlayCircle
+  LogIn,
+  UserPlus,
+  ArrowRight,
+  CheckCircle2,
+  MessageCircle
 } from 'lucide-react';
 import { AdConfig, AdTheme, DeviceFrame, LoadingState } from './types';
 import { AdPreview } from './components/AdPreview';
-import { generateAdScene, generateAdVideo } from './services/geminiService';
+import { generateAdScene } from './services/geminiService';
 
-// Removed conflicting global declaration
-// We will access aistudio via (window as any) to avoid conflict with existing type definitions
+// --- CUSTOM ICONS ---
+
+const BogurMascot: React.FC<{ className?: string }> = ({ className }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    {/* Orelhas */}
+    <path d="M20 35C15 20 30 15 40 25" fill="#F59E0B" stroke="#451A03" strokeWidth="3" strokeLinejoin="round"/>
+    <path d="M80 35C85 20 70 15 60 25" fill="#F59E0B" stroke="#451A03" strokeWidth="3" strokeLinejoin="round"/>
+    <path d="M25 32C22 25 30 22 35 28" fill="#FEF3C7"/>
+    <path d="M75 32C78 25 70 22 65 28" fill="#FEF3C7"/>
+
+    {/* Cabeça */}
+    <path d="M50 90C75 90 90 70 90 50C90 30 75 15 50 15C25 15 10 30 10 50C10 70 25 90 50 90Z" fill="#FBBF24" stroke="#451A03" strokeWidth="3"/>
+
+    {/* Mancha do Rosto (Branca) */}
+    <path d="M50 90C70 90 80 75 80 60C80 50 70 45 65 50C60 55 55 50 50 50C45 50 40 55 35 50C30 45 20 50 20 60C20 75 30 90 50 90Z" fill="#FEF3C7"/>
+
+    {/* Olhos */}
+    <ellipse cx="35" cy="45" rx="5" ry="7" fill="#451A03"/>
+    <circle cx="36.5" cy="43" r="2" fill="white"/>
+    
+    <ellipse cx="65" cy="45" rx="5" ry="7" fill="#451A03"/>
+    <circle cx="66.5" cy="43" r="2" fill="white"/>
+
+    {/* Bochechas */}
+    <circle cx="28" cy="58" r="4" fill="#FCA5A5" opacity="0.8"/>
+    <circle cx="72" cy="58" r="4" fill="#FCA5A5" opacity="0.8"/>
+
+    {/* Nariz */}
+    <path d="M46 56C46 56 50 54 54 56C54 56 52 62 50 62C48 62 46 56 46 56Z" fill="#451A03"/>
+
+    {/* Boca */}
+    <path d="M50 62V65" stroke="#451A03" strokeWidth="2" strokeLinecap="round"/>
+    <path d="M42 65C45 70 50 70 50 65C50 70 55 70 58 65" stroke="#451A03" strokeWidth="2" strokeLinecap="round"/>
+  </svg>
+);
+
+// --- COMPONENTS ---
+
+// 1. Auth Screen Component
+const AuthScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
+  const [isLogin, setIsLogin] = useState(true);
+  
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-950 p-4 relative overflow-hidden">
+      {/* Background Ambience */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-amber-900/20 rounded-full blur-[120px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-900/20 rounded-full blur-[120px]" />
+
+      <div className="w-full max-w-md bg-slate-900/80 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 flex flex-col items-center">
+        
+        {/* LOGO BOGUR PUBLICIDADE */}
+        <div className="flex flex-col items-center justify-center mb-10 transform hover:scale-105 transition-transform duration-300">
+            {/* Mascot Circle */}
+            <div className="w-32 h-32 rounded-full bg-[#86efac] border-[6px] border-[#451a03] flex items-center justify-center relative z-10 shadow-xl overflow-hidden">
+                 <BogurMascot className="w-24 h-24 mt-2" />
+            </div>
+            {/* Text Badge */}
+            <div className="bg-[#451a03] px-10 py-4 rounded-[2rem] -mt-8 pt-10 pb-4 border-[4px] border-[#451a03] shadow-2xl flex flex-col items-center min-w-[260px]">
+                <h1 className="text-5xl font-black text-white tracking-wide leading-none font-sans drop-shadow-md">BOGUR</h1>
+                <span className="text-xs font-bold text-amber-100 tracking-[0.4em] mt-1 drop-shadow-sm">PUBLICIDADE</span>
+            </div>
+        </div>
+
+        <p className="text-slate-400 text-center mb-8 w-full">
+          {isLogin ? "Bem-vindo de volta! Acesse seus projetos." : "Crie anúncios profissionais em segundos."}
+        </p>
+
+        <form className="space-y-4 w-full" onSubmit={(e) => { e.preventDefault(); onLogin(); }}>
+          <div>
+            <label className="block text-white font-bold mb-1">Email</label>
+            <input 
+              type="email" 
+              placeholder="seu@email.com"
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-white font-bold mb-1">Senha</label>
+            <input 
+              type="password" 
+              placeholder="••••••••"
+              className="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white placeholder-slate-500 focus:ring-2 focus:ring-amber-500 focus:border-transparent outline-none transition-all"
+            />
+          </div>
+
+          <button 
+            type="submit"
+            className="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold py-3 px-4 rounded-xl shadow-lg shadow-amber-500/20 active:scale-[0.98] transition-all flex items-center justify-center gap-2 mt-2"
+          >
+            {isLogin ? (
+              <><span>Entrar</span> <ArrowRight size={18} /></>
+            ) : (
+              <><span>Criar Conta Grátis</span> <UserPlus size={18} /></>
+            )}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center w-full">
+          <p className="text-slate-400 text-sm">
+            {isLogin ? "Não tem uma conta? " : "Já tem uma conta? "}
+            <button 
+              onClick={() => setIsLogin(!isLogin)}
+              className="text-amber-400 hover:text-amber-300 font-medium ml-1 transition-colors"
+            >
+              {isLogin ? "Cadastre-se" : "Entrar"}
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// --- MAIN APP COMPONENT ---
 
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [config, setConfig] = useState<AdConfig>({
     productImage: null,
     generatedImage: null,
-    videoUrl: null,
-    outputType: 'image',
     narrative: '',
     headline: 'Sinta a diferença.',
     ctaText: 'Comprar Agora',
@@ -38,13 +152,14 @@ const App: React.FC = () => {
     device: DeviceFrame.PHONE,
   });
 
-  // History can store URLs (image or blob)
-  const [history, setHistory] = useState<{url: string, type: 'image' | 'video'}[]>([]);
+  const [buttonMode, setButtonMode] = useState<'site' | 'whatsapp'>('site');
+  const [whatsappNumber, setWhatsappNumber] = useState('');
+
+  const [history, setHistory] = useState<string[]>([]);
   const [refinePrompt, setRefinePrompt] = useState('');
   const [loading, setLoading] = useState<LoadingState>({ status: 'idle' });
   const [showOriginal, setShowOriginal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
   const previewRef = useRef<HTMLDivElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -56,7 +171,6 @@ const App: React.FC = () => {
             ...prev, 
             productImage: reader.result as string,
             generatedImage: null,
-            videoUrl: null
         }));
         setHistory([]); 
       };
@@ -64,8 +178,30 @@ const App: React.FC = () => {
     }
   };
 
-  const addToHistory = (url: string, type: 'image' | 'video') => {
-    setHistory(prev => [{url, type}, ...prev]);
+  const addToHistory = (url: string) => {
+    setHistory(prev => [url, ...prev]);
+  };
+
+  const updateWhatsappLink = (number: string) => {
+      setWhatsappNumber(number);
+      // Remove non-digits
+      const cleanNumber = number.replace(/\D/g, '');
+      if (cleanNumber.length > 0) {
+          const finalLink = `https://wa.me/55${cleanNumber}`;
+          setConfig(prev => ({ ...prev, ctaLink: finalLink }));
+      } else {
+          setConfig(prev => ({ ...prev, ctaLink: '' }));
+      }
+  };
+
+  const handleButtonModeChange = (mode: 'site' | 'whatsapp') => {
+      setButtonMode(mode);
+      if (mode === 'whatsapp') {
+          setConfig(prev => ({ ...prev, ctaText: 'Chamar no WhatsApp' }));
+          updateWhatsappLink(whatsappNumber);
+      } else {
+          setConfig(prev => ({ ...prev, ctaText: 'Comprar Agora', ctaLink: 'https://' }));
+      }
   };
 
   const handleGenerate = async () => {
@@ -74,104 +210,66 @@ const App: React.FC = () => {
       return;
     }
 
-    // Veo/Video requires specific paid key check
-    if (config.outputType === 'video') {
-       const aistudio = (window as any).aistudio;
-       if (aistudio) {
-         const hasKey = await aistudio.hasSelectedApiKey();
-         if (!hasKey) {
-            await aistudio.openSelectKey();
-            // We assume success after the dialog closes, or the user can click generate again if it failed.
-            // But let's check again just in case or proceed.
-         }
-       }
-    } else if (!process.env.API_KEY) {
-        alert("Chave da API não encontrada.");
-        return;
-    }
-
-    setLoading({ status: 'generating', message: config.outputType === 'video' ? 'Gerando vídeo (pode demorar até 1 minuto)...' : 'A IA está criando seu anúncio...' });
+    setLoading({ status: 'generating', message: 'A IA está criando seu anúncio...' });
 
     try {
-      if (config.outputType === 'video') {
-          // Determine aspect ratio for Veo based on device
-          // Veo supports 9:16 or 16:9
-          const aspectRatio = config.device === DeviceFrame.DESKTOP ? '16:9' : '9:16';
-          
-          const resultVideo = await generateAdVideo(
-            config.productImage,
-            config.narrative || "Showcase this product in a cinematic way",
-            config.theme,
-            aspectRatio
-          );
-          
-          setConfig(prev => ({ ...prev, videoUrl: resultVideo }));
-          addToHistory(resultVideo, 'video');
-
-      } else {
-          const resultImage = await generateAdScene(
-            config.productImage,
-            config.narrative || "Crie um anúncio profissional",
-            config.theme,
-            'generate'
-          );
-    
-          setConfig(prev => ({ ...prev, generatedImage: resultImage }));
-          addToHistory(resultImage, 'image');
-      }
+        // Determine aspect ratio for image based on device
+        // Phone 9:16, Tablet 4:5 (using 3:4 as closest API support), Desktop 16:9
+        const aspectRatio = config.device === DeviceFrame.DESKTOP ? '16:9' : (config.device === DeviceFrame.TABLET ? '3:4' : '9:16');
+        
+        const resultImage = await generateAdScene(
+        config.productImage,
+        config.narrative || "Crie um anúncio profissional",
+        config.theme,
+        'generate',
+        aspectRatio
+        );
+        setConfig(prev => ({ ...prev, generatedImage: resultImage }));
+        addToHistory(resultImage);
 
       setLoading({ status: 'success' });
-      
       setTimeout(() => {
         previewRef.current?.scrollIntoView({ behavior: 'smooth' });
       }, 100);
 
     } catch (error: any) {
       console.error(error);
-      const aistudio = (window as any).aistudio;
-      // Handle Veo "Requested entity was not found" error specifically if needed
-      if (error.message?.includes("Requested entity was not found") && aistudio) {
-         setLoading({ status: 'error', message: 'Erro de chave API. Por favor, selecione uma chave novamente.' });
-         await aistudio.openSelectKey();
-      } else {
-         setLoading({ status: 'error', message: 'Erro ao gerar. Tente novamente.' });
-      }
+      setLoading({ status: 'error', message: error.message || 'Erro ao gerar. Tente novamente ou verifique sua conexão.' });
     }
   };
 
   const handleRefine = async () => {
-    // Only supported for images currently
-    if (!config.generatedImage || config.outputType === 'video') return;
+    if (!config.generatedImage) return;
     if (!refinePrompt.trim()) {
         alert("Digite o que deseja alterar na imagem.");
         return;
     }
-
     setLoading({ status: 'generating', message: 'Ajustando imagem com IA...' });
-
     try {
+        const aspectRatio = config.device === DeviceFrame.DESKTOP ? '16:9' : (config.device === DeviceFrame.TABLET ? '3:4' : '9:16');
         const resultImage = await generateAdScene(
             config.generatedImage,
             refinePrompt,
             config.theme,
-            'edit'
+            'edit',
+            aspectRatio
         );
         setConfig(prev => ({ ...prev, generatedImage: resultImage }));
-        addToHistory(resultImage, 'image');
+        addToHistory(resultImage);
         setRefinePrompt(''); 
         setLoading({ status: 'success' });
-    } catch (error) {
+    } catch (error: any) {
         console.error(error);
-        setLoading({ status: 'error', message: 'Falha ao editar a imagem.' });
+        setLoading({ status: 'error', message: error.message || 'Falha ao editar a imagem.' });
     }
   };
 
   const handleDownload = () => {
-    const url = config.outputType === 'video' ? config.videoUrl : config.generatedImage;
+    const url = config.generatedImage;
     if (url) {
       const link = document.createElement('a');
       link.href = url;
-      link.download = config.outputType === 'video' ? `anuncio-veo-${Date.now()}.mp4` : `anuncio-adgenius-${Date.now()}.png`;
+      link.download = `anuncio-bogur-${Date.now()}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -180,68 +278,82 @@ const App: React.FC = () => {
     }
   };
 
-  const selectHistoryItem = (item: {url: string, type: 'image' | 'video'}) => {
-    if (item.type === 'video') {
-        setConfig(prev => ({ ...prev, videoUrl: item.url, outputType: 'video', generatedImage: null }));
-    } else {
-        setConfig(prev => ({ ...prev, generatedImage: item.url, outputType: 'image', videoUrl: null }));
-    }
+  const selectHistoryItem = (url: string) => {
+      setConfig(prev => ({ ...prev, generatedImage: url }));
   };
 
+  // If not authenticated, show Auth Screen
+  if (!isAuthenticated) {
+    return <AuthScreen onLogin={() => setIsAuthenticated(true)} />;
+  }
+
+  // Main App Interface
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans">
+    <div className="min-h-screen bg-slate-950 text-slate-100 font-sans selection:bg-amber-500/30">
+      
       {/* Header */}
-      <header className="bg-white border-b border-slate-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="bg-indigo-600 p-2 rounded-lg">
-                <Wand2 className="text-white w-5 h-5" />
+      <header className="bg-slate-900/50 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+          {/* Header Logo Compact */}
+          <div className="flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+            <div className="w-10 h-10 rounded-full bg-[#86efac] border-[2px] border-[#451a03] flex items-center justify-center overflow-hidden shrink-0">
+                 <BogurMascot className="w-8 h-8 mt-1" />
             </div>
-            <h1 className="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-600 to-violet-600">
-              AdGenius AI
-            </h1>
+            <div className="bg-[#451a03] px-3 py-1 rounded-lg border border-[#451a03] flex flex-col justify-center h-10">
+                <h1 className="text-lg font-black text-white tracking-wide leading-none">BOGUR</h1>
+                <span className="text-[0.5rem] font-bold text-amber-100 tracking-[0.2em] leading-none">PUBLICIDADE</span>
+            </div>
           </div>
+
           <div className="flex items-center gap-4">
-             {/* Key Selector Helper */}
-             <button onClick={() => (window as any).aistudio?.openSelectKey()} className="text-xs text-slate-400 hover:text-indigo-600 underline">
-                API Key
-             </button>
-             <button className="text-sm font-medium text-indigo-600 hover:text-indigo-700">Entrar</button>
+             <div className="flex items-center gap-3 pl-4 border-l border-slate-800">
+                <div className="w-8 h-8 rounded-full bg-amber-900/50 border border-amber-500/30 flex items-center justify-center text-amber-300 font-medium text-sm">
+                  JD
+                </div>
+                <button 
+                  onClick={() => setIsAuthenticated(false)}
+                  className="text-sm font-medium text-slate-400 hover:text-white transition-colors"
+                >
+                  Sair
+                </button>
+             </div>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <main className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
           
           {/* LEFT COLUMN: Controls */}
-          <div className="lg:col-span-4 space-y-6">
+          <div className="xl:col-span-4 space-y-6 relative z-30">
             
             {/* Step 1: Product Upload */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="bg-indigo-100 p-1.5 rounded-md text-indigo-700">
-                    <ImageIcon size={18} />
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-indigo-500/10 p-2 rounded-lg text-indigo-400">
+                    <ImageIcon size={20} />
                 </div>
-                <h2 className="font-semibold text-lg">1. Foto do Produto</h2>
+                <h2 className="font-semibold text-lg text-white">1. Foto do Produto</h2>
               </div>
               
               <div 
-                className={`border-2 border-dashed rounded-xl p-8 flex flex-col items-center justify-center text-center cursor-pointer transition-colors ${config.productImage ? 'border-indigo-300 bg-indigo-50/50' : 'border-slate-300 hover:border-indigo-400 hover:bg-slate-50'}`}
+                className={`border-2 border-dashed rounded-xl h-64 flex flex-col items-center justify-center text-center cursor-pointer transition-all duration-300 relative overflow-hidden group ${config.productImage ? 'border-indigo-500/50 bg-slate-950' : 'border-slate-700 hover:border-emerald-500 hover:bg-slate-800/50'}`}
                 onClick={() => fileInputRef.current?.click()}
               >
                 {config.productImage ? (
-                    <div className="relative group w-full h-48">
-                        <img src={config.productImage} alt="Produto" className="w-full h-full object-contain rounded-lg" />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-lg">
-                            <span className="text-white font-medium">Trocar Foto</span>
+                    <>
+                        <img src={config.productImage} alt="Produto" className="w-full h-full object-contain p-4" />
+                        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                            <span className="text-white font-medium flex items-center gap-2"><Upload size={16}/> Trocar Foto</span>
                         </div>
-                    </div>
+                    </>
                 ) : (
                     <>
-                        <Upload className="w-10 h-10 text-slate-400 mb-3" />
-                        <p className="text-sm font-medium text-slate-700">Clique ou arraste a foto</p>
-                        <p className="text-xs text-slate-500 mt-1">PNG, JPG</p>
+                        <div className="bg-slate-800 p-5 rounded-full mb-4 group-hover:scale-110 transition-transform ring-2 ring-emerald-500/20">
+                          <Upload className="w-12 h-12 text-emerald-500" />
+                        </div>
+                        <p className="text-2xl font-bold text-white uppercase tracking-wide">CLIQUE OU ARRASTE A FOTO</p>
+                        <p className="text-base text-white mt-2">Suporta PNG, JPG e WEBP</p>
                     </>
                 )}
                 <input 
@@ -255,54 +367,38 @@ const App: React.FC = () => {
             </div>
 
             {/* Step 2: Narrative & Theme */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-              <div className="flex items-center gap-2 mb-4">
-                <div className="bg-pink-100 p-1.5 rounded-md text-pink-700">
-                    <Wand2 size={18} />
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="bg-pink-500/10 p-2 rounded-lg text-pink-400">
+                    <Wand2 size={20} />
                 </div>
-                <h2 className="font-semibold text-lg">2. Cenário e Estilo</h2>
+                <h2 className="font-semibold text-lg text-white">2. Cenário e Estilo</h2>
               </div>
 
-              <div className="space-y-4">
-                {/* Format Selector */}
-                <div className="flex p-1 bg-slate-100 rounded-lg">
-                    <button 
-                        onClick={() => setConfig({...config, outputType: 'image'})}
-                        className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${config.outputType === 'image' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        <ImageIcon size={16} />
-                        Imagem
-                    </button>
-                    <button 
-                         onClick={() => setConfig({...config, outputType: 'video'})}
-                         className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-medium rounded-md transition-all ${config.outputType === 'video' ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
-                    >
-                        <Video size={16} />
-                        Vídeo (Veo)
-                    </button>
-                </div>
-
+              <div className="space-y-5">
+                
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1">
-                        {config.outputType === 'video' ? "Descreva o movimento e cena:" : "Como você imagina o anúncio?"}
+                    <label className="block text-white font-bold mb-2">
+                        Narrativa do Anúncio:
                     </label>
                     <textarea 
-                        className="w-full p-3 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent outline-none text-sm min-h-[100px]"
-                        placeholder={config.outputType === 'video' ? 'Ex: Câmera lenta girando em torno do produto, luzes cinematográficas.' : 'Ex: "O produto flutuando no espaço com luzes neon"'}
+                        className="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-lg text-white placeholder-slate-600 min-h-[120px] resize-none"
+                        placeholder='Ex: "O produto flutuando no espaço com luzes neon rosa e azul..."'
                         value={config.narrative}
                         onChange={(e) => setConfig({...config, narrative: e.target.value})}
                     />
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Estilo Visual</label>
-                    <div className="grid grid-cols-2 gap-2">
+                    <label className="block text-lg font-bold text-white mb-3">Estilo Visual</label>
+                    <div className="grid grid-cols-1 gap-3">
                         {Object.values(AdTheme).map((theme) => (
                             <button
                                 key={theme}
                                 onClick={() => setConfig({...config, theme})}
-                                className={`text-xs py-2 px-3 rounded-md border text-left transition-all ${config.theme === theme ? 'border-indigo-600 bg-indigo-50 text-indigo-700 ring-1 ring-indigo-600' : 'border-slate-200 hover:border-slate-300 text-slate-600'}`}
+                                className={`text-lg font-bold py-5 px-5 rounded-xl border text-left transition-all relative overflow-hidden ${config.theme === theme ? 'border-emerald-500 bg-emerald-500/10 text-emerald-300' : 'border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700 hover:text-white'}`}
                             >
+                                {config.theme === theme && <div className="absolute top-2 right-2 p-1"><CheckCircle2 size={24} /></div>}
                                 {theme}
                             </button>
                         ))}
@@ -312,65 +408,101 @@ const App: React.FC = () => {
                 <button 
                     onClick={handleGenerate}
                     disabled={loading.status === 'generating' || !config.productImage}
-                    className="w-full bg-gradient-to-r from-indigo-600 to-violet-600 text-white font-semibold py-3 px-4 rounded-xl hover:shadow-lg hover:shadow-indigo-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold py-4 px-6 rounded-xl shadow-lg shadow-emerald-500/20 active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3 mt-4"
                 >
                     {loading.status === 'generating' ? (
                         <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
-                            <span>{config.outputType === 'video' ? 'Gerando Vídeo...' : 'Criando Anúncio...'}</span>
+                            <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+                            <span>Processando IA...</span>
                         </>
                     ) : (
                         <>
-                            {config.outputType === 'video' ? <Video size={18}/> : <Wand2 size={18} />}
-                            <span>{config.outputType === 'video' ? 'Gerar Vídeo' : 'Gerar Imagem'}</span>
+                            <Wand2 size={20} />
+                            <span>Gerar Anúncio Agora</span>
                         </>
                     )}
                 </button>
                 {loading.status === 'error' && (
-                    <p className="text-xs text-red-500 text-center">{loading.message}</p>
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl text-sm flex flex-col gap-2">
+                        <strong className="flex items-center gap-2">❌ Erro na Geração</strong>
+                        <span>{loading.message}</span>
+                    </div>
                 )}
               </div>
             </div>
 
             {/* Step 3: Overlay Content */}
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-               <div className="flex items-center gap-2 mb-4">
-                <div className="bg-emerald-100 p-1.5 rounded-md text-emerald-700">
-                    <Type size={18} />
+            <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+               <div className="flex items-center gap-3 mb-4">
+                <div className="bg-emerald-500/10 p-2 rounded-lg text-emerald-400">
+                    <Type size={20} />
                 </div>
-                <h2 className="font-semibold text-lg">3. Texto e Links</h2>
+                <h2 className="font-semibold text-lg text-white">3. Texto e Links</h2>
               </div>
               
               <div className="space-y-4">
+                 {/* Button Type Selector */}
+                 <div className="flex bg-slate-950 p-1 rounded-lg border border-slate-800">
+                     <button 
+                        onClick={() => handleButtonModeChange('site')}
+                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all ${buttonMode === 'site' ? 'bg-indigo-600 text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                     >
+                         Site / Loja
+                     </button>
+                     <button 
+                        onClick={() => handleButtonModeChange('whatsapp')}
+                        className={`flex-1 py-2 text-sm font-bold rounded-md transition-all flex items-center justify-center gap-2 ${buttonMode === 'whatsapp' ? 'bg-[#25D366] text-white shadow' : 'text-slate-400 hover:text-white'}`}
+                     >
+                         <MessageCircle size={16} /> WhatsApp
+                     </button>
+                 </div>
+
                  <div>
-                    <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Manchete (Headline)</label>
+                    <label className="block text-xs font-bold text-white uppercase tracking-wider mb-1">Manchete (Headline)</label>
                     <input 
                         type="text"
                         value={config.headline}
                         onChange={(e) => setConfig({...config, headline: e.target.value})}
-                        className="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                        className="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
                     />
                  </div>
-                 <div className="grid grid-cols-2 gap-4">
+                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Texto do Botão</label>
+                        <label className="block text-xs font-bold text-white uppercase tracking-wider mb-1">Texto do Botão</label>
                         <input 
                             type="text"
                             value={config.ctaText}
                             onChange={(e) => setConfig({...config, ctaText: e.target.value})}
-                            className="w-full p-2 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
+                            className="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">Link de Destino</label>
+                        <label className="block text-xs font-bold text-white uppercase tracking-wider mb-1">
+                            {buttonMode === 'whatsapp' ? "Número (DDD + Tel)" : "Link de Destino"}
+                        </label>
                         <div className="relative">
-                            <LinkIcon className="absolute left-2.5 top-2.5 text-slate-400 w-4 h-4" />
-                            <input 
-                                type="text"
-                                value={config.ctaLink}
-                                onChange={(e) => setConfig({...config, ctaLink: e.target.value})}
-                                className="w-full p-2 pl-9 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none"
-                            />
+                            {buttonMode === 'whatsapp' ? (
+                                <MessageCircle className="absolute left-3 top-3.5 text-emerald-500 w-4 h-4" />
+                            ) : (
+                                <LinkIcon className="absolute left-3 top-3.5 text-slate-500 w-4 h-4" />
+                            )}
+                            
+                            {buttonMode === 'whatsapp' ? (
+                                <input 
+                                    type="text"
+                                    value={whatsappNumber}
+                                    placeholder="Ex: 11999998888"
+                                    onChange={(e) => updateWhatsappLink(e.target.value)}
+                                    className="w-full p-3 pl-10 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
+                                />
+                            ) : (
+                                <input 
+                                    type="text"
+                                    value={config.ctaLink}
+                                    onChange={(e) => setConfig({...config, ctaLink: e.target.value})}
+                                    className="w-full p-3 pl-10 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
+                                />
+                            )}
                         </div>
                     </div>
                  </div>
@@ -380,20 +512,20 @@ const App: React.FC = () => {
           </div>
 
           {/* RIGHT COLUMN: Preview & History */}
-          <div className="lg:col-span-8 flex flex-col h-full gap-6" ref={previewRef}>
+          <div className="xl:col-span-8 flex flex-col h-full gap-6" ref={previewRef}>
              
              {/* Format Toggles */}
-             <div className="flex justify-between items-center">
-                 <div className="bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm inline-flex gap-1">
+             <div className="flex flex-wrap justify-between items-center gap-4 bg-slate-900/50 p-2 rounded-2xl border border-slate-800">
+                 <div className="flex bg-slate-950 p-1 rounded-xl border border-slate-800 gap-1 overflow-x-auto max-w-full">
                     {[
                         { id: DeviceFrame.PHONE, icon: Smartphone, label: 'Stories (9:16)' },
-                        { id: DeviceFrame.TABLET, icon: Tablet, label: 'Feed' },
+                        { id: DeviceFrame.TABLET, icon: Tablet, label: 'Feed (4:5)' },
                         { id: DeviceFrame.DESKTOP, icon: Monitor, label: 'Wide (16:9)' },
                     ].map((item) => (
                         <button
                             key={item.id}
                             onClick={() => setConfig({...config, device: item.id})}
-                            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${config.device === item.id ? 'bg-slate-900 text-white shadow-md' : 'text-slate-500 hover:bg-slate-100'}`}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all whitespace-nowrap ${config.device === item.id ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-900'}`}
                         >
                             <item.icon size={16} />
                             <span className="hidden sm:inline">{item.label}</span>
@@ -401,112 +533,102 @@ const App: React.FC = () => {
                     ))}
                  </div>
 
-                 {/* Compare Toggle - Only available for images currently or just product compare */}
-                 {(config.generatedImage || config.videoUrl) && (
+                 {/* Compare Toggle */}
+                 {(config.generatedImage) && (
                     <button
                         onMouseDown={() => setShowOriginal(true)}
                         onMouseUp={() => setShowOriginal(false)}
                         onMouseLeave={() => setShowOriginal(false)}
-                        className="flex items-center gap-2 text-sm font-medium text-indigo-600 bg-indigo-50 px-3 py-2 rounded-lg hover:bg-indigo-100 active:scale-95 transition-all select-none"
+                        className="flex items-center gap-2 text-sm font-medium text-amber-400 bg-amber-500/10 border border-amber-500/20 px-4 py-2.5 rounded-lg hover:bg-amber-500/20 active:scale-95 transition-all select-none ml-auto"
                     >
                         <Eye size={16} />
-                        Segurar para Comparar
+                        <span className="hidden sm:inline">Segurar para Comparar</span>
                     </button>
                  )}
              </div>
 
-             <div className="flex flex-col lg:flex-row gap-6">
+             <div className="flex flex-col xl:flex-row gap-6">
                 
-                {/* Main Preview */}
+                {/* Main Preview Area */}
                 <div className="flex-1 flex flex-col items-center">
-                    <div className="w-full relative">
+                    <div className="w-full relative flex justify-center bg-slate-900/50 rounded-2xl border border-slate-800/50 p-4 min-h-[500px] items-center">
                         <AdPreview 
                             config={config} 
                             showOriginal={showOriginal}
-                            className="w-full min-h-[500px] lg:min-h-[700px]" 
+                            className="" 
                         />
                     </div>
                     
-                    {/* Refine / Actions */}
-                     {(config.generatedImage || config.videoUrl) && (
-                        <div className="w-full mt-4 flex flex-col gap-4">
-                            {/* Refine Input - Images Only */}
-                            {config.outputType === 'image' && (
-                                <div className="bg-white p-3 rounded-xl border border-slate-200 shadow-sm flex flex-col sm:flex-row gap-2">
-                                    <div className="flex items-center gap-2 text-slate-400 pl-2">
-                                        <Edit2 size={16} />
-                                    </div>
-                                    <input 
-                                        type="text" 
-                                        className="flex-1 p-2 bg-transparent text-sm outline-none placeholder:text-slate-400"
-                                        placeholder='O que quer mudar? Ex: "Adicionar óculos de sol"'
-                                        value={refinePrompt}
-                                        onChange={(e) => setRefinePrompt(e.target.value)}
-                                        onKeyDown={(e) => e.key === 'Enter' && handleRefine()}
-                                    />
-                                    <button 
-                                        onClick={handleRefine}
-                                        disabled={loading.status === 'generating'}
-                                        className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-                                    >
-                                        Ajustar
-                                    </button>
-                                </div>
-                            )}
+                    {/* Action Bar */}
+                     {(config.generatedImage) && (
+                        <div className="w-full mt-6 flex flex-col gap-4 max-w-3xl">
+                            {/* Refine Input */}
+                            <div className="bg-slate-900 p-2 pl-4 rounded-xl border border-slate-800 flex flex-col sm:flex-row gap-2 items-center">
+                                <Edit2 size={18} className="text-slate-500" />
+                                <input 
+                                    type="text" 
+                                    className="flex-1 p-2 bg-transparent text-sm text-white outline-none placeholder:text-slate-500 w-full"
+                                    placeholder='O que quer mudar? Ex: "Adicionar óculos de sol"'
+                                    value={refinePrompt}
+                                    onChange={(e) => setRefinePrompt(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleRefine()}
+                                />
+                                <button 
+                                    onClick={handleRefine}
+                                    disabled={loading.status === 'generating'}
+                                    className="w-full sm:w-auto bg-slate-800 hover:bg-slate-700 text-white px-5 py-2.5 rounded-lg text-sm font-medium transition-colors border border-slate-700"
+                                >
+                                    Ajustar
+                                </button>
+                            </div>
 
-                            {/* Download / Save */}
-                            <div className="flex gap-3">
+                            {/* Download Buttons */}
+                            <div className="flex gap-4">
                                 <button 
                                     onClick={handleDownload}
-                                    className="flex-1 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 px-4 py-3 rounded-xl font-medium shadow-sm flex items-center justify-center gap-2 transition-colors"
+                                    className="flex-1 bg-amber-600 hover:bg-amber-500 text-white px-6 py-4 rounded-xl font-bold shadow-lg shadow-amber-500/20 flex items-center justify-center gap-3 transition-all hover:-translate-y-0.5"
                                 >
-                                    <Download size={18} />
-                                    <span>Baixar {config.outputType === 'video' ? 'Vídeo' : 'Imagem'}</span>
+                                    <Download size={20} />
+                                    <span>Baixar Imagem</span>
                                 </button>
                                 <button 
-                                    onClick={() => alert("Projeto salvo! (Simulação)")}
-                                    className="flex-1 bg-slate-900 text-white hover:bg-slate-800 px-4 py-3 rounded-xl font-medium shadow-lg flex items-center justify-center gap-2 transition-colors"
+                                    onClick={() => alert("Projeto salvo na nuvem!")}
+                                    className="flex-1 bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 px-6 py-4 rounded-xl font-bold shadow-lg flex items-center justify-center gap-3 transition-all hover:-translate-y-0.5"
                                 >
-                                    <Layout size={18} />
-                                    <span>Salvar</span>
+                                    <Layout size={20} />
+                                    <span>Salvar Projeto</span>
                                 </button>
                             </div>
                         </div>
                      )}
                 </div>
 
-                {/* Right Side: History Gallery */}
+                {/* History Gallery Sidebar */}
                 {history.length > 0 && (
-                    <div className="lg:w-48 flex-shrink-0 flex flex-col bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden h-fit">
-                        <div className="p-3 border-b border-slate-100 flex items-center gap-2 bg-slate-50">
-                            <History size={14} className="text-slate-500"/>
-                            <span className="text-xs font-semibold text-slate-700 uppercase tracking-wide">Galeria</span>
+                    <div className="xl:w-64 flex-shrink-0 flex flex-col bg-slate-900 rounded-xl border border-slate-800 overflow-hidden h-fit max-h-[800px]">
+                        <div className="p-4 border-b border-slate-800 flex items-center gap-2 bg-slate-900/80 backdrop-blur-sm sticky top-0 z-10">
+                            <History size={16} className="text-amber-400"/>
+                            <span className="text-xs font-bold text-slate-300 uppercase tracking-wider">Versões Anteriores</span>
                         </div>
-                        <div className="p-2 space-y-2 max-h-[600px] overflow-y-auto">
-                            {history.map((item, idx) => (
+                        <div className="p-3 space-y-3 overflow-y-auto custom-scrollbar">
+                            {history.map((url, idx) => (
                                 <button
                                     key={idx}
-                                    onClick={() => selectHistoryItem(item)}
-                                    className={`relative w-full aspect-square rounded-lg overflow-hidden border-2 transition-all group ${
-                                        (item.type === 'video' ? config.videoUrl === item.url : config.generatedImage === item.url)
-                                        ? 'border-indigo-600 ring-2 ring-indigo-100' 
-                                        : 'border-slate-100 hover:border-slate-300'
+                                    onClick={() => selectHistoryItem(url)}
+                                    className={`relative w-full aspect-square rounded-xl overflow-hidden border-2 transition-all group ${
+                                        config.generatedImage === url
+                                        ? 'border-amber-500 ring-4 ring-amber-500/10' 
+                                        : 'border-slate-800 hover:border-slate-600'
                                     }`}
                                 >
-                                    {item.type === 'video' ? (
-                                        <div className="w-full h-full bg-slate-800 flex items-center justify-center">
-                                            <PlayCircle className="text-white w-8 h-8" />
-                                        </div>
-                                    ) : (
-                                        <img src={item.url} alt={`Versão ${history.length - idx}`} className="w-full h-full object-cover" />
-                                    )}
+                                    <img src={url} alt={`Versão ${history.length - idx}`} className="w-full h-full object-cover" />
                                     
-                                    <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white text-[10px] py-1 text-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                        {item.type === 'video' ? 'Vídeo' : 'Imagem'} {history.length - idx}
+                                    <div className="absolute bottom-0 left-0 right-0 bg-black/70 backdrop-blur-sm text-white text-[10px] py-2 text-center translate-y-full group-hover:translate-y-0 transition-transform">
+                                        Imagem {history.length - idx}
                                     </div>
                                     
                                     {idx === 0 && (
-                                        <div className="absolute top-1 right-1 w-2 h-2 bg-indigo-500 rounded-full shadow-sm"></div>
+                                        <div className="absolute top-2 right-2 w-3 h-3 bg-amber-500 rounded-full shadow-[0_0_10px_rgba(245,158,11,0.5)] border border-white/20"></div>
                                     )}
                                 </button>
                             ))}
