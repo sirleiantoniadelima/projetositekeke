@@ -2,35 +2,60 @@ import { GoogleGenAI } from "@google/genai";
 import { AdTheme } from "../types";
 
 /**
- * Helper seguro para recuperar a API Key em diferentes ambientes (Vite, Webpack, Node).
+ * Função otimizada para capturar a API Key no Netlify/Vite.
  */
 const getApiKey = (): string | undefined => {
-  let key: string | undefined = undefined;
-
-  // 1. Tenta recuperar via Vite (import.meta.env) - Padrão para Netlify/Vercel com Vite
+  // Diagnóstico para ajudar o usuário a debugar no Console do Navegador (F12)
+  console.log("--- DIAGNÓSTICO BOGUR PUBLICIDADE ---");
+  
+  // 1. Tenta VITE (Padrão Netlify / Vite)
   try {
     // @ts-ignore
     if (typeof import.meta !== 'undefined' && import.meta.env) {
+      console.log("Ambiente 'import.meta.env' detectado.");
+      
       // @ts-ignore
-      // O prefixo VITE_ é obrigatório para exposição no cliente em builds Vite
-      key = import.meta.env.VITE_API_KEY || import.meta.env.API_KEY;
+      const viteKey = import.meta.env.VITE_API_KEY;
+      if (viteKey) {
+          console.log("✅ Chave encontrada em VITE_API_KEY");
+          return viteKey;
+      } else {
+          console.log("❌ VITE_API_KEY está vazia ou indefinida.");
+      }
+      
+      // @ts-ignore
+      const metaKey = import.meta.env.API_KEY;
+      if (metaKey) {
+          console.log("⚠️ Chave encontrada em API_KEY (pode não funcionar em produção se não tiver prefixo VITE_).");
+          return metaKey;
+      }
+    } else {
+        console.log("Ambiente 'import.meta.env' NÃO detectado.");
     }
   } catch (e) {
-    // Silencia erro se import.meta não for suportado
+    console.log("Erro ao ler import.meta:", e);
   }
 
-  if (key) return key;
-
-  // 2. Tenta recuperar via process.env - Padrão Node/Webpack/CRA
+  // 2. Tenta PROCESS (Fallback para ambientes Node/Webpack antigos)
   try {
     if (typeof process !== 'undefined' && process.env) {
-      key = process.env.API_KEY || process.env.REACT_APP_API_KEY || process.env.VITE_API_KEY;
+      console.log("Ambiente 'process.env' detectado.");
+      const pKey = process.env.VITE_API_KEY || 
+             process.env.REACT_APP_API_KEY || 
+             process.env.GOOGLE_API_KEY || 
+             process.env.API_KEY;
+      
+      if (pKey) {
+          console.log("✅ Chave encontrada via process.env");
+          return pKey;
+      }
     }
   } catch (e) {
-    // Silencia erro se process não for definido
+    // Ignora erro se process não existir
   }
 
-  return key;
+  console.log("❌ NENHUMA CHAVE ENCONTRADA EM LUGAR NENHUM.");
+  return undefined;
 };
 
 /**
@@ -48,13 +73,24 @@ export const generateAdScene = async (
 
     if (!apiKey) {
         throw new Error(
-            "ERRO DE CONFIGURAÇÃO: Chave de API não encontrada.\n\n" +
-            "SOLUÇÃO PARA NETLIFY / VERCEL:\n" +
-            "1. Vá nas configurações de Variáveis de Ambiente do seu host.\n" +
-            "2. Crie uma variável chamada 'VITE_API_KEY'.\n" +
-            "3. Cole sua chave Google AI Studio como valor.\n" +
-            "4. Faça um novo Deploy (Rebuild) para aplicar.\n\n" +
-            "Se for local, crie um arquivo .env com VITE_API_KEY=..."
+            "ERRO CRÍTICO DE CONFIGURAÇÃO (NETLIFY):\n\n" +
+            "A Chave de API não foi encontrada.\n" +
+            "Motivo provável: O nome da variável está errado.\n\n" +
+            "CORREÇÃO:\n" +
+            "1. O Nome (Key) DEVE ser EXATAMENTE: VITE_API_KEY\n" +
+            "   (NÃO use 'EVITE_API_KEY', NÃO use 'API_KEY', NÃO use espaços).\n" +
+            "2. O Valor deve começar com 'AIza...'.\n" +
+            "3. IMPORTANTE: Vá em 'Deploys' > 'Trigger deploy' > 'Clear cache and deploy site' para atualizar."
+        );
+    }
+    
+    // Validação extra para formato da chave
+    if (!apiKey.startsWith("AIza")) {
+        throw new Error(
+            "CHAVE INVÁLIDA DETECTADA:\n" +
+            "O aplicativo encontrou uma chave, mas ela não parece ser do Google.\n" +
+            "Sua chave deve começar com as letras 'AIza'.\n" +
+            "Verifique se você não colou texto extra (ex: 'lavoura:') no campo de valor no Netlify."
         );
     }
 
@@ -149,7 +185,7 @@ export const generateAdScene = async (
     console.error("Gemini API Error:", error);
     
     // Repassa o erro original se for algo que já tratamos (como chave ausente)
-    if (error.message && (error.message.includes("API Key") || error.message.includes("Chave de API"))) {
+    if (error.message && (error.message.includes("API Key") || error.message.includes("Chave de API") || error.message.includes("VITE_API_KEY") || error.message.includes("CHAVE INVÁLIDA"))) {
         throw error;
     }
     
