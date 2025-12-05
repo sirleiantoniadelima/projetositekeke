@@ -1,3 +1,4 @@
+
 export enum DeviceFrame {
   PHONE = 'PHONE',
   TABLET = 'TABLET',
@@ -7,6 +8,7 @@ export enum DeviceFrame {
 export interface AdConfig {
   productImage: string | null;
   generatedImage: string | null;
+  logoImage: string | null;
   narrative: string;
   headline: string;
   ctaText: string;

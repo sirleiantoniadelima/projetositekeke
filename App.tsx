@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Upload, 
@@ -18,7 +19,8 @@ import {
   UserPlus,
   ArrowRight,
   CheckCircle2,
-  MessageCircle
+  MessageCircle,
+  X
 } from 'lucide-react';
 import { AdConfig, AdTheme, DeviceFrame, LoadingState } from './types';
 import { AdPreview } from './components/AdPreview';
@@ -28,31 +30,72 @@ import { generateAdScene } from './services/geminiService';
 
 const BogurMascot: React.FC<{ className?: string }> = ({ className }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    {/* Orelhas */}
-    <path d="M20 35C15 20 30 15 40 25" fill="#F59E0B" stroke="#451A03" strokeWidth="3" strokeLinejoin="round"/>
-    <path d="M80 35C85 20 70 15 60 25" fill="#F59E0B" stroke="#451A03" strokeWidth="3" strokeLinejoin="round"/>
-    <path d="M25 32C22 25 30 22 35 28" fill="#FEF3C7"/>
-    <path d="M75 32C78 25 70 22 65 28" fill="#FEF3C7"/>
+    <defs>
+      {/* Gradients para efeito 3D */}
+      <linearGradient id="faceGrad" x1="50" y1="10" x2="50" y2="90" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#FCD34D" /> {/* Amber 300 */}
+        <stop offset="1" stopColor="#D97706" /> {/* Amber 600 */}
+      </linearGradient>
+      
+      <linearGradient id="earGrad" x1="50" y1="0" x2="50" y2="100" gradientUnits="userSpaceOnUse">
+        <stop stopColor="#F59E0B" />
+        <stop offset="1" stopColor="#78350F" />
+      </linearGradient>
 
-    {/* Cabeça */}
-    <path d="M50 90C75 90 90 70 90 50C90 30 75 15 50 15C25 15 10 30 10 50C10 70 25 90 50 90Z" fill="#FBBF24" stroke="#451A03" strokeWidth="3"/>
+      <radialGradient id="snoutGrad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(50 60) rotate(90) scale(20)">
+        <stop stopColor="#FFFBEB" />
+        <stop offset="1" stopColor="#FDE68A" />
+      </radialGradient>
 
-    {/* Mancha do Rosto (Branca) */}
-    <path d="M50 90C70 90 80 75 80 60C80 50 70 45 65 50C60 55 55 50 50 50C45 50 40 55 35 50C30 45 20 50 20 60C20 75 30 90 50 90Z" fill="#FEF3C7"/>
+      <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+        <feOffset dx="0" dy="2" result="offsetblur"/>
+        <feComponentTransfer>
+          <feFuncA type="linear" slope="0.3"/>
+        </feComponentTransfer>
+        <feMerge> 
+          <feMergeNode/>
+          <feMergeNode in="SourceGraphic"/> 
+        </feMerge>
+      </filter>
+    </defs>
 
-    {/* Olhos */}
-    <ellipse cx="35" cy="45" rx="5" ry="7" fill="#451A03"/>
-    <circle cx="36.5" cy="43" r="2" fill="white"/>
+    {/* Orelhas (Fundo) */}
+    <path d="M20 35C15 20 30 15 40 25" fill="url(#earGrad)" stroke="#451A03" strokeWidth="2" strokeLinejoin="round"/>
+    <path d="M80 35C85 20 70 15 60 25" fill="url(#earGrad)" stroke="#451A03" strokeWidth="2" strokeLinejoin="round"/>
     
-    <ellipse cx="65" cy="45" rx="5" ry="7" fill="#451A03"/>
-    <circle cx="66.5" cy="43" r="2" fill="white"/>
+    {/* Interior Orelhas */}
+    <path d="M26 32C24 28 28 25 32 29" fill="#FEF3C7" opacity="0.8"/>
+    <path d="M74 32C76 28 72 25 68 29" fill="#FEF3C7" opacity="0.8"/>
 
-    {/* Bochechas */}
-    <circle cx="28" cy="58" r="4" fill="#FCA5A5" opacity="0.8"/>
-    <circle cx="72" cy="58" r="4" fill="#FCA5A5" opacity="0.8"/>
+    {/* Cabeça Principal */}
+    <path d="M50 90C75 90 90 70 90 50C90 30 75 15 50 15C25 15 10 30 10 50C10 70 25 90 50 90Z" fill="url(#faceGrad)" stroke="#451A03" strokeWidth="2" filter="url(#softShadow)"/>
 
-    {/* Nariz */}
+    {/* Brilho na Testa (Highlight 3D) */}
+    <ellipse cx="50" cy="30" rx="20" ry="10" fill="white" opacity="0.2"/>
+
+    {/* Focinho / Mancha Clara */}
+    <path d="M50 88C70 88 80 75 80 60C80 52 70 48 65 52C60 56 55 52 50 52C45 52 40 56 35 52C30 48 20 52 20 60C20 75 30 88 50 88Z" fill="url(#snoutGrad)"/>
+
+    {/* Olhos (Com reflexo de vidro) */}
+    <g>
+        <ellipse cx="35" cy="45" rx="6" ry="8" fill="#451A03"/>
+        <circle cx="37" cy="42" r="2.5" fill="white" opacity="0.9"/>
+        <circle cx="33" cy="47" r="1" fill="white" opacity="0.3"/>
+    </g>
+    <g>
+        <ellipse cx="65" cy="45" rx="6" ry="8" fill="#451A03"/>
+        <circle cx="67" cy="42" r="2.5" fill="white" opacity="0.9"/>
+        <circle cx="63" cy="47" r="1" fill="white" opacity="0.3"/>
+    </g>
+
+    {/* Bochechas (Blush suave) */}
+    <circle cx="28" cy="60" r="5" fill="#FCA5A5" opacity="0.6" filter="url(#softShadow)"/>
+    <circle cx="72" cy="60" r="5" fill="#FCA5A5" opacity="0.6" filter="url(#softShadow)"/>
+
+    {/* Nariz 3D */}
     <path d="M46 56C46 56 50 54 54 56C54 56 52 62 50 62C48 62 46 56 46 56Z" fill="#451A03"/>
+    <ellipse cx="50" cy="56.5" rx="2" ry="1" fill="white" opacity="0.3"/>
 
     {/* Boca */}
     <path d="M50 62V65" stroke="#451A03" strokeWidth="2" strokeLinecap="round"/>
@@ -74,16 +117,24 @@ const AuthScreen: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
 
       <div className="w-full max-w-md bg-slate-900/80 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 flex flex-col items-center">
         
-        {/* LOGO BOGUR PUBLICIDADE */}
-        <div className="flex flex-col items-center justify-center mb-10 transform hover:scale-105 transition-transform duration-300">
-            {/* Mascot Circle */}
-            <div className="w-32 h-32 rounded-full bg-[#86efac] border-[6px] border-[#451a03] flex items-center justify-center relative z-10 shadow-xl overflow-hidden">
-                 <BogurMascot className="w-24 h-24 mt-2" />
+        {/* LOGO BOGUR PUBLICIDADE (VERSÃO 3D) */}
+        <div className="flex flex-col items-center justify-center mb-10 transform hover:scale-105 transition-transform duration-500 cursor-pointer group">
+            
+            {/* Mascot Circle Container 3D */}
+            <div className="w-40 h-40 rounded-full bg-gradient-to-b from-green-300 to-green-600 border-[6px] border-[#3f1602] flex items-center justify-center relative z-10 shadow-[0_15px_30px_rgba(0,0,0,0.6),inset_0_-5px_10px_rgba(0,0,0,0.2),inset_0_5px_10px_rgba(255,255,255,0.4)] overflow-hidden">
+                 {/* Brilho de Vidro (Glass effect) */}
+                 <div className="absolute top-0 left-0 w-full h-[50%] bg-gradient-to-b from-white/30 to-transparent rounded-t-full pointer-events-none z-20"></div>
+                 
+                 <BogurMascot className="w-32 h-32 mt-4 z-10 drop-shadow-2xl filter contrast-125" />
             </div>
-            {/* Text Badge */}
-            <div className="bg-[#451a03] px-10 py-4 rounded-[2rem] -mt-8 pt-10 pb-4 border-[4px] border-[#451a03] shadow-2xl flex flex-col items-center min-w-[260px]">
-                <h1 className="text-5xl font-black text-white tracking-wide leading-none font-sans drop-shadow-md">BOGUR</h1>
-                <span className="text-xs font-bold text-amber-100 tracking-[0.4em] mt-1 drop-shadow-sm">PUBLICIDADE</span>
+            
+            {/* Text Badge 3D */}
+            <div className="bg-gradient-to-b from-[#5D2305] to-[#2E1102] px-12 py-5 rounded-[2rem] -mt-10 pt-12 pb-5 border-[4px] border-[#3f1602] shadow-[0_20px_40px_rgba(0,0,0,0.7)] flex flex-col items-center min-w-[280px] relative z-0">
+                {/* Highlight borda badge */}
+                <div className="absolute inset-0 rounded-[2rem] border-t border-white/20 pointer-events-none"></div>
+
+                <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-300 tracking-wide leading-none font-sans drop-shadow-md">BOGUR</h1>
+                <span className="text-xs font-extrabold text-amber-400 tracking-[0.4em] mt-1 drop-shadow-sm uppercase">Publicidade</span>
             </div>
         </div>
 
@@ -144,6 +195,7 @@ const App: React.FC = () => {
   const [config, setConfig] = useState<AdConfig>({
     productImage: null,
     generatedImage: null,
+    logoImage: null,
     narrative: '',
     headline: 'Sinta a diferença.',
     ctaText: 'Comprar Agora',
@@ -160,6 +212,7 @@ const App: React.FC = () => {
   const [loading, setLoading] = useState<LoadingState>({ status: 'idle' });
   const [showOriginal, setShowOriginal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
   const previewRef = useRef<HTMLDivElement>(null);
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -173,6 +226,20 @@ const App: React.FC = () => {
             generatedImage: null,
         }));
         setHistory([]); 
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setConfig(prev => ({ 
+            ...prev, 
+            logoImage: reader.result as string
+        }));
       };
       reader.readAsDataURL(file);
     }
@@ -228,9 +295,12 @@ const App: React.FC = () => {
         addToHistory(resultImage);
 
       setLoading({ status: 'success' });
+      // Pequeno delay para garantir que o scroll funcione após renderização
       setTimeout(() => {
-        previewRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, 100);
+        if (previewRef.current) {
+            previewRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 200);
 
     } catch (error: any) {
       console.error(error);
@@ -294,14 +364,15 @@ const App: React.FC = () => {
       {/* Header */}
       <header className="bg-slate-900/50 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-          {/* Header Logo Compact */}
-          <div className="flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer" onClick={() => window.scrollTo(0,0)}>
-            <div className="w-10 h-10 rounded-full bg-[#86efac] border-[2px] border-[#451a03] flex items-center justify-center overflow-hidden shrink-0">
-                 <BogurMascot className="w-8 h-8 mt-1" />
+          {/* Header Logo Compact 3D */}
+          <div className="flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer group" onClick={() => window.scrollTo(0,0)}>
+            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-green-400 to-green-700 border-[2px] border-[#3f1602] flex items-center justify-center overflow-hidden shrink-0 shadow-lg relative">
+                 <div className="absolute top-0 w-full h-1/2 bg-gradient-to-b from-white/40 to-transparent"></div>
+                 <BogurMascot className="w-9 h-9 mt-1 drop-shadow-md" />
             </div>
-            <div className="bg-[#451a03] px-3 py-1 rounded-lg border border-[#451a03] flex flex-col justify-center h-10">
-                <h1 className="text-lg font-black text-white tracking-wide leading-none">BOGUR</h1>
-                <span className="text-[0.5rem] font-bold text-amber-100 tracking-[0.2em] leading-none">PUBLICIDADE</span>
+            <div className="bg-gradient-to-b from-[#5D2305] to-[#2E1102] px-4 py-1 rounded-lg border border-[#3f1602] flex flex-col justify-center h-11 shadow-md">
+                <h1 className="text-xl font-black text-white tracking-wide leading-none drop-shadow-sm">BOGUR</h1>
+                <span className="text-[0.6rem] font-bold text-amber-400 tracking-[0.2em] leading-none uppercase">Publicidade</span>
             </div>
           </div>
 
@@ -378,9 +449,21 @@ const App: React.FC = () => {
               <div className="space-y-5">
                 
                 <div>
-                    <label className="block text-white font-bold mb-2">
-                        Narrativa do Anúncio:
-                    </label>
+                    <div className="flex justify-between items-center mb-2">
+                        <label className="block text-white font-bold">
+                            Narrativa do Anúncio:
+                        </label>
+                        {config.narrative && (
+                            <button
+                                onClick={() => setConfig({ ...config, narrative: '' })}
+                                className="text-slate-500 hover:text-red-400 transition-colors flex items-center gap-1 text-xs uppercase font-bold tracking-wider"
+                                title="Limpar texto"
+                            >
+                                <Trash2 size={14} />
+                                Limpar
+                            </button>
+                        )}
+                    </div>
                     <textarea 
                         className="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none text-lg text-white placeholder-slate-600 min-h-[120px] resize-none"
                         placeholder='Ex: "O produto flutuando no espaço com luzes neon rosa e azul..."'
@@ -455,6 +538,46 @@ const App: React.FC = () => {
                      >
                          <MessageCircle size={16} /> WhatsApp
                      </button>
+                 </div>
+
+                 {/* LOGO UPLOAD */}
+                 <div>
+                    <label className="block text-xs font-bold text-white uppercase tracking-wider mb-2">Logo da Marca (Opcional)</label>
+                    <div className="flex items-center gap-3">
+                        <div 
+                            onClick={() => logoInputRef.current?.click()}
+                            className="w-16 h-16 rounded-lg bg-slate-950 border border-slate-700 border-dashed flex items-center justify-center cursor-pointer hover:border-emerald-500 transition-colors overflow-hidden relative group"
+                        >
+                            {config.logoImage ? (
+                                <>
+                                    <img src={config.logoImage} className="w-full h-full object-contain p-1" alt="Logo" />
+                                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <Upload size={14} />
+                                    </div>
+                                </>
+                            ) : (
+                                <Upload size={20} className="text-slate-500" />
+                            )}
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <span className="text-xs text-slate-400">Sua logo aparecerá na barra.</span>
+                            {config.logoImage && (
+                                <button 
+                                    onClick={() => setConfig(prev => ({ ...prev, logoImage: null }))}
+                                    className="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1"
+                                >
+                                    <X size={12}/> Remover logo
+                                </button>
+                            )}
+                        </div>
+                        <input 
+                            type="file" 
+                            ref={logoInputRef}
+                            className="hidden"
+                            accept="image/*"
+                            onChange={handleLogoUpload}
+                        />
+                    </div>
                  </div>
 
                  <div>
