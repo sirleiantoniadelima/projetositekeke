@@ -1,48 +1,546 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Bogur Publicidade - Criador de Anúncios</title>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bogur Publicidade - Standalone</title>
+    
+    <!-- 1. Tailwind CSS (Estilos) -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. Fontes Google -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-        background-color: #020617; /* Slate 950 - Fundo preto profundo */
-        color: #f8fafc;
-      }
-      /* Custom scrollbar for dark mode */
-      ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #0f172a; 
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #334155; 
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #475569; 
-      }
-    </style>
-  <script type="importmap">
+    
+    <!-- 3. Ícones Lucide -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- 4. Google Generative AI SDK -->
+    <script type="importmap">
 {
   "imports": {
-    "@google/genai": "https://aistudiocdn.com/@google/genai@^1.30.0",
-    "react-dom/client": "https://aistudiocdn.com/react-dom@^19.2.1/client",
-    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.555.0",
-    "react/": "https://aistudiocdn.com/react@^19.2.1/",
+    "@google/genai": "https://esm.run/@google/genai",
     "react": "https://aistudiocdn.com/react@^19.2.1",
-    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.1/"
+    "lucide-react": "https://aistudiocdn.com/lucide-react@^0.556.0",
+    "react/": "https://aistudiocdn.com/react@^19.2.1/"
   }
 }
 </script>
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617; /* Slate 950 */
+            color: #f8fafc;
+        }
+        /* Scrollbar Personalizada */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(30, 41, 59, 0.5);
+        }
+        
+        /* Animação de Carregamento */
+        .spinner {
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top: 3px solid #fff;
+            width: 20px;
+            height: 20px;
+            -webkit-animation: spin 1s linear infinite; /* Safari */
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="./index.tsx"></script>
-  </body>
+<body class="min-h-screen selection:bg-amber-500/30">
+
+    <!-- =======================
+         TELA DE LOGIN / AUTH
+         ======================= -->
+    <div id="auth-screen" class="fixed inset-0 z-50 bg-slate-950 flex items-center justify-center p-4">
+        <!-- Efeitos de Fundo -->
+        <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-amber-900/20 rounded-full blur-[120px]"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-emerald-900/20 rounded-full blur-[120px]"></div>
+
+        <div class="w-full max-w-md bg-slate-900/80 backdrop-blur-xl border border-slate-800 p-8 rounded-2xl shadow-2xl relative z-10 flex flex-col items-center">
+            
+            <!-- LOGO BOGUR 3D (SVG Inline) -->
+            <div class="flex flex-col items-center justify-center mb-8 transform hover:scale-105 transition-transform duration-500">
+                <div class="w-40 h-40 rounded-full bg-gradient-to-b from-green-300 to-green-600 border-[6px] border-[#3f1602] flex items-center justify-center relative z-10 shadow-2xl overflow-hidden">
+                     <div class="absolute top-0 left-0 w-full h-[50%] bg-gradient-to-b from-white/30 to-transparent rounded-t-full pointer-events-none z-20"></div>
+                     <!-- SVG Mascote -->
+                     <svg viewBox="0 0 100 100" class="w-32 h-32 mt-4 z-10 drop-shadow-2xl filter contrast-125" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <defs>
+                          <linearGradient id="faceGrad" x1="50" y1="10" x2="50" y2="90" gradientUnits="userSpaceOnUse"><stop stopColor="#FCD34D" /><stop offset="1" stopColor="#D97706" /></linearGradient>
+                          <linearGradient id="earGrad" x1="50" y1="0" x2="50" y2="100" gradientUnits="userSpaceOnUse"><stop stopColor="#F59E0B" /><stop offset="1" stopColor="#78350F" /></linearGradient>
+                          <radialGradient id="snoutGrad" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(50 60) rotate(90) scale(20)"><stop stopColor="#FFFBEB" /><stop offset="1" stopColor="#FDE68A" /></radialGradient>
+                          <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%"><feGaussianBlur in="SourceAlpha" stdDeviation="2"/><feOffset dx="0" dy="2"/><feComponentTransfer><feFuncA type="linear" slope="0.3"/></feComponentTransfer><feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+                        </defs>
+                        <path d="M20 35C15 20 30 15 40 25" fill="url(#earGrad)" stroke="#451A03" strokeWidth="2" strokeLinejoin="round"/>
+                        <path d="M80 35C85 20 70 15 60 25" fill="url(#earGrad)" stroke="#451A03" strokeWidth="2" strokeLinejoin="round"/>
+                        <path d="M26 32C24 28 28 25 32 29" fill="#FEF3C7" opacity="0.8"/>
+                        <path d="M74 32C76 28 72 25 68 29" fill="#FEF3C7" opacity="0.8"/>
+                        <path d="M50 90C75 90 90 70 90 50C90 30 75 15 50 15C25 15 10 30 10 50C10 70 25 90 50 90Z" fill="url(#faceGrad)" stroke="#451A03" strokeWidth="2" filter="url(#softShadow)"/>
+                        <ellipse cx="50" cy="30" rx="20" ry="10" fill="white" opacity="0.2"/>
+                        <path d="M50 88C70 88 80 75 80 60C80 52 70 48 65 52C60 56 55 52 50 52C45 52 40 56 35 52C30 48 20 52 20 60C20 75 30 88 50 88Z" fill="url(#snoutGrad)"/>
+                        <g><ellipse cx="35" cy="45" rx="6" ry="8" fill="#451A03"/><circle cx="37" cy="42" r="2.5" fill="white" opacity="0.9"/><circle cx="33" cy="47" r="1" fill="white" opacity="0.3"/></g>
+                        <g><ellipse cx="65" cy="45" rx="6" ry="8" fill="#451A03"/><circle cx="67" cy="42" r="2.5" fill="white" opacity="0.9"/><circle cx="63" cy="47" r="1" fill="white" opacity="0.3"/></g>
+                        <circle cx="28" cy="60" r="5" fill="#FCA5A5" opacity="0.6" filter="url(#softShadow)"/>
+                        <circle cx="72" cy="60" r="5" fill="#FCA5A5" opacity="0.6" filter="url(#softShadow)"/>
+                        <path d="M46 56C46 56 50 54 54 56C46 56 52 62 50 62C48 62 46 56 46 56Z" fill="#451A03"/>
+                        <ellipse cx="50" cy="56.5" rx="2" ry="1" fill="white" opacity="0.3"/>
+                        <path d="M50 62V65" stroke="#451A03" strokeWidth="2" strokeLinecap="round"/>
+                        <path d="M42 65C45 70 50 70 50 65C50 70 55 70 58 65" stroke="#451A03" strokeWidth="2" strokeLinecap="round"/>
+                      </svg>
+                </div>
+                <div class="bg-gradient-to-b from-[#5D2305] to-[#2E1102] px-12 py-5 rounded-[2rem] -mt-10 pt-12 pb-5 border-[4px] border-[#3f1602] shadow-2xl flex flex-col items-center min-w-[280px] relative z-0">
+                    <div class="absolute inset-0 rounded-[2rem] border-t border-white/20 pointer-events-none"></div>
+                    <h1 className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-white to-slate-300 tracking-wide leading-none font-sans drop-shadow-md" style="font-size: 3rem; font-weight: 900; -webkit-background-clip: text; color: transparent; background-image: linear-gradient(to bottom, white, #cbd5e1);">BOGUR</h1>
+                    <span class="text-xs font-extrabold text-amber-400 tracking-[0.4em] mt-1 uppercase">Publicidade</span>
+                </div>
+            </div>
+
+            <p class="text-slate-400 text-center mb-6">Insira sua chave do Google Gemini para começar.</p>
+
+            <form id="login-form" class="space-y-4 w-full">
+                <div>
+                    <label class="block text-white font-bold mb-1">Google API Key</label>
+                    <input type="password" id="api-key-input" placeholder="Cole sua chave AIza..." class="w-full bg-slate-800 border border-slate-700 rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-amber-500 outline-none">
+                    <p class="text-[10px] text-slate-500 mt-1">Sua chave será salva no navegador.</p>
+                </div>
+                <button type="submit" class="w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 text-white font-bold py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2">
+                    <span>Entrar</span> <i data-lucide="arrow-right"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- =======================
+         APLICAÇÃO PRINCIPAL
+         ======================= -->
+    <div id="app-container" class="hidden min-h-screen">
+        
+        <!-- Header -->
+        <header class="bg-slate-900/50 backdrop-blur-md border-b border-slate-800 sticky top-0 z-40">
+            <div class="max-w-[1600px] mx-auto px-4 h-16 flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-400 to-green-700 border-2 border-[#3f1602] flex items-center justify-center overflow-hidden">
+                        <!-- Mini Mascote (apenas SVG simples) -->
+                        <div class="w-6 h-6 bg-amber-500 rounded-full border border-[#451A03]"></div> 
+                    </div>
+                    <span class="font-bold text-white tracking-wide">BOGUR <span class="text-amber-400 text-xs">APP</span></span>
+                </div>
+                <button id="logout-btn" class="text-sm font-medium text-slate-400 hover:text-white">Sair</button>
+            </div>
+        </header>
+
+        <main class="max-w-[1600px] mx-auto px-4 py-8 grid grid-cols-1 xl:grid-cols-12 gap-8">
+            
+            <!-- ESQUERDA: Controles -->
+            <div class="xl:col-span-4 space-y-6">
+                
+                <!-- 1. Upload -->
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                    <div class="flex items-center gap-3 mb-4 text-white">
+                        <i data-lucide="image" class="text-indigo-400"></i>
+                        <h2 class="font-semibold text-lg">1. Foto do Produto</h2>
+                    </div>
+                    <div id="drop-zone" class="border-2 border-dashed border-slate-700 rounded-xl h-64 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-800/50 hover:border-emerald-500 transition-all relative overflow-hidden group">
+                        <img id="product-preview-img" class="hidden w-full h-full object-contain p-4 z-10">
+                        <div id="upload-placeholder" class="text-center">
+                            <i data-lucide="upload" class="w-12 h-12 text-emerald-500 mx-auto mb-4"></i>
+                            <p class="text-2xl font-bold text-white uppercase">CLIQUE OU ARRASTE</p>
+                        </div>
+                        <input type="file" id="file-input" class="hidden" accept="image/*">
+                    </div>
+                </div>
+
+                <!-- 2. Narrativa -->
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                    <div class="flex items-center gap-3 mb-4 text-white">
+                        <i data-lucide="wand-2" class="text-pink-400"></i>
+                        <h2 class="font-semibold text-lg">2. Cenário</h2>
+                    </div>
+                    <textarea id="narrative-input" class="w-full p-4 bg-slate-950 border border-slate-800 rounded-xl text-white placeholder-slate-600 min-h-[100px]" placeholder="Ex: Produto flutuando no espaço..."></textarea>
+                    
+                    <button id="generate-btn" class="w-full mt-4 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 text-white font-bold py-4 rounded-xl shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <i data-lucide="wand-2"></i> <span>Gerar Anúncio</span>
+                    </button>
+                    <div id="loading-msg" class="hidden mt-2 text-center text-emerald-400 text-sm animate-pulse">Criando imagem com IA...</div>
+                </div>
+
+                <!-- 3. Texto e Links -->
+                <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-xl">
+                    <div class="flex items-center gap-3 mb-4 text-white">
+                        <i data-lucide="type" class="text-emerald-400"></i>
+                        <h2 class="font-semibold text-lg">3. Texto e Links</h2>
+                    </div>
+                    
+                    <!-- Botão Toggle -->
+                    <div class="flex bg-slate-950 p-1 rounded-lg border border-slate-800 mb-4">
+                        <button id="mode-site" class="flex-1 py-2 text-sm font-bold rounded-md bg-indigo-600 text-white">Site / Loja</button>
+                        <button id="mode-whatsapp" class="flex-1 py-2 text-sm font-bold rounded-md text-slate-400 hover:text-white flex items-center justify-center gap-2"><i data-lucide="message-circle" class="w-4"></i> WhatsApp</button>
+                    </div>
+
+                    <!-- Upload Logo -->
+                    <div class="mb-4">
+                        <label class="block text-xs font-bold text-white uppercase mb-2">Logo (Opcional)</label>
+                        <div class="flex items-center gap-3">
+                            <div id="logo-upload-btn" class="w-16 h-16 rounded-lg bg-slate-950 border border-slate-700 border-dashed flex items-center justify-center cursor-pointer hover:border-emerald-500 overflow-hidden">
+                                <img id="logo-preview" class="hidden w-full h-full object-contain p-1">
+                                <i data-lucide="upload" id="logo-icon" class="text-slate-500"></i>
+                            </div>
+                            <input type="file" id="logo-input" class="hidden" accept="image/*">
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <input id="headline-input" type="text" value="Sinta a diferença." class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white" placeholder="Manchete">
+                        <div class="grid grid-cols-2 gap-3">
+                            <input id="cta-text-input" type="text" value="Comprar Agora" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white" placeholder="Texto Botão">
+                            <input id="link-input" type="text" class="w-full p-3 bg-slate-950 border border-slate-800 rounded-lg text-white" placeholder="Link (https://...)">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DIREITA: Preview -->
+            <div class="xl:col-span-8">
+                
+                <!-- Card do Anúncio (Estilo DIVIDIDO / CARD) -->
+                <div class="w-full flex justify-center bg-slate-900/50 rounded-2xl border border-slate-800/50 p-6">
+                    
+                    <div id="ad-card" class="bg-slate-950 shadow-2xl flex flex-col rounded-xl border-[12px] border-slate-800 overflow-hidden w-full max-w-[500px] aspect-[3/4] transition-all">
+                        
+                        <!-- 1. Imagem (Topo) -->
+                        <div class="relative flex-1 w-full bg-slate-900 overflow-hidden group cursor-zoom-in" onclick="toggleFullscreen()">
+                            <img id="preview-image" src="https://via.placeholder.com/800?text=Aguardando+Imagem" class="w-full h-full object-cover transition-transform duration-700 hover:scale-105">
+                            <div class="absolute top-3 right-3 bg-black/40 backdrop-blur-md text-white text-[9px] uppercase px-2 py-1 rounded border border-white/20">Patrocinado</div>
+                        </div>
+
+                        <!-- 2. Rodapé (Preto com Texto) -->
+                        <div class="w-full bg-slate-950 p-5 flex flex-col gap-3 border-t border-slate-900 shrink-0 z-20">
+                            <!-- Logo renderizada aqui -->
+                            <div id="preview-logo-container" class="h-8 mb-1 hidden items-start">
+                                <img id="preview-logo-img" class="h-full object-contain max-w-[120px]">
+                            </div>
+
+                            <h2 id="preview-headline" class="font-black text-white leading-tight text-xl line-clamp-2">Sinta a diferença.</h2>
+
+                            <div class="flex items-center justify-between gap-3 mt-1 w-full">
+                                <a id="preview-cta-btn" href="#" target="_blank" class="flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 bg-white text-slate-950 hover:bg-slate-200 transition-all">
+                                    <i data-lucide="shopping-bag" id="cta-icon"></i>
+                                    <span id="preview-cta-text" class="text-sm uppercase font-extrabold">Comprar Agora</span>
+                                </a>
+                                <div class="w-11 h-11 bg-slate-900 rounded-xl flex items-center justify-center text-slate-400 border border-slate-800 shrink-0">
+                                    <i data-lucide="qr-code" class="w-5"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Ações -->
+                <div id="actions-bar" class="hidden mt-6 flex gap-4 max-w-[500px] mx-auto">
+                    <button onclick="downloadImage()" class="flex-1 bg-amber-600 hover:bg-amber-500 text-white px-6 py-4 rounded-xl font-bold flex items-center justify-center gap-2">
+                        <i data-lucide="download"></i> Baixar
+                    </button>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- Modal Fullscreen -->
+    <div id="fullscreen-modal" class="fixed inset-0 z-[100] bg-black/95 hidden items-center justify-center p-4" onclick="toggleFullscreen()">
+        <img id="fullscreen-img" class="max-w-full max-h-full object-contain rounded-lg">
+    </div>
+
+    <!-- =======================
+         LÓGICA JAVASCRIPT
+         ======================= -->
+    <script type="module">
+        import { GoogleGenAI } from "@google/genai";
+
+        // --- ESTADO ---
+        const state = {
+            apiKey: localStorage.getItem('BOGUR_API_KEY') || '',
+            productImage: null,
+            generatedImage: null,
+            logoImage: null,
+            narrative: '',
+            headline: 'Sinta a diferença.',
+            ctaText: 'Comprar Agora',
+            ctaLink: '',
+            mode: 'site', // 'site' | 'whatsapp'
+            siteUrlMemory: '',
+            whatsappMemory: ''
+        };
+
+        // --- REFERÊNCIAS DOM ---
+        const els = {
+            authScreen: document.getElementById('auth-screen'),
+            appContainer: document.getElementById('app-container'),
+            loginForm: document.getElementById('login-form'),
+            apiKeyInput: document.getElementById('api-key-input'),
+            dropZone: document.getElementById('drop-zone'),
+            fileInput: document.getElementById('file-input'),
+            productPreview: document.getElementById('product-preview-img'),
+            uploadPlaceholder: document.getElementById('upload-placeholder'),
+            narrativeInput: document.getElementById('narrative-input'),
+            generateBtn: document.getElementById('generate-btn'),
+            loadingMsg: document.getElementById('loading-msg'),
+            previewImage: document.getElementById('preview-image'),
+            fullscreenModal: document.getElementById('fullscreen-modal'),
+            fullscreenImg: document.getElementById('fullscreen-img'),
+            headlineInput: document.getElementById('headline-input'),
+            previewHeadline: document.getElementById('preview-headline'),
+            ctaTextInput: document.getElementById('cta-text-input'),
+            previewCtaText: document.getElementById('preview-cta-text'),
+            linkInput: document.getElementById('link-input'),
+            previewCtaBtn: document.getElementById('preview-cta-btn'),
+            modeSiteBtn: document.getElementById('mode-site'),
+            modeWhatsBtn: document.getElementById('mode-whatsapp'),
+            ctaIcon: document.getElementById('cta-icon'),
+            logoInput: document.getElementById('logo-input'),
+            logoUploadBtn: document.getElementById('logo-upload-btn'),
+            logoPreview: document.getElementById('logo-preview'),
+            logoIcon: document.getElementById('logo-icon'),
+            previewLogoContainer: document.getElementById('preview-logo-container'),
+            previewLogoImg: document.getElementById('preview-logo-img'),
+            actionsBar: document.getElementById('actions-bar')
+        };
+
+        // --- INICIALIZAÇÃO ---
+        lucide.createIcons();
+
+        // Verificar Login
+        if (state.apiKey) {
+            els.apiKeyInput.value = state.apiKey;
+        }
+
+        els.loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const key = els.apiKeyInput.value.trim();
+            if (key.startsWith('AIza')) {
+                state.apiKey = key;
+                localStorage.setItem('BOGUR_API_KEY', key);
+                els.authScreen.classList.add('hidden');
+                els.appContainer.classList.remove('hidden');
+            } else {
+                alert('Chave inválida. Deve começar com "AIza".');
+            }
+        });
+
+        document.getElementById('logout-btn').addEventListener('click', () => {
+            localStorage.removeItem('BOGUR_API_KEY');
+            location.reload();
+        });
+
+        // --- UPLOAD IMAGEM PRODUTO ---
+        els.dropZone.addEventListener('click', () => els.fileInput.click());
+        els.fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    state.productImage = ev.target.result;
+                    els.productPreview.src = state.productImage;
+                    els.productPreview.classList.remove('hidden');
+                    els.uploadPlaceholder.classList.add('hidden');
+                    els.dropZone.classList.add('bg-slate-950', 'border-indigo-500');
+                    // Resetar prévia para a original
+                    state.generatedImage = null;
+                    updatePreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // --- UPLOAD LOGO ---
+        els.logoUploadBtn.addEventListener('click', () => els.logoInput.click());
+        els.logoInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (ev) => {
+                    state.logoImage = ev.target.result;
+                    els.logoPreview.src = state.logoImage;
+                    els.logoPreview.classList.remove('hidden');
+                    els.logoIcon.classList.add('hidden');
+                    updatePreview();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // --- ATUALIZAÇÃO EM TEMPO REAL (TEXTOS) ---
+        const updateTexts = () => {
+            state.headline = els.headlineInput.value;
+            state.ctaText = els.ctaTextInput.value;
+            
+            // Atualizar UI
+            els.previewHeadline.innerText = state.headline;
+            els.previewCtaText.innerText = state.ctaText;
+
+            // Link Logic
+            let link = els.linkInput.value;
+            if (state.mode === 'whatsapp') {
+                state.whatsappMemory = link; // salvar numero
+                const clean = link.replace(/\D/g, '');
+                state.ctaLink = clean ? `https://wa.me/55${clean}` : '#';
+            } else {
+                state.siteUrlMemory = link; // salvar url
+                state.ctaLink = link.startsWith('http') ? link : `https://${link}`;
+            }
+            els.previewCtaBtn.href = state.ctaLink;
+        };
+
+        els.headlineInput.addEventListener('input', updateTexts);
+        els.ctaTextInput.addEventListener('input', updateTexts);
+        els.linkInput.addEventListener('input', updateTexts);
+
+        // --- MODOS (SITE vs WHATSAPP) ---
+        const setMode = (mode) => {
+            state.mode = mode;
+            if (mode === 'whatsapp') {
+                els.modeSiteBtn.className = "flex-1 py-2 text-sm font-bold rounded-md text-slate-400 hover:text-white";
+                els.modeWhatsBtn.className = "flex-1 py-2 text-sm font-bold rounded-md bg-[#25D366] text-white flex items-center justify-center gap-2 shadow";
+                els.linkInput.placeholder = "Número (DDD+Tel)";
+                els.linkInput.value = state.whatsappMemory;
+                
+                // Estilo Botão Verde
+                els.previewCtaBtn.className = "flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 bg-[#25D366] text-white hover:brightness-110 transition-all shadow-lg";
+                // Trocar icone (usando replace do lucide ou innerHTML)
+                els.ctaIcon.innerHTML = `<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M8 8v8a8 8 0 0 1-8-8"/>`; // Simplificado, ideal recriar via lucide
+                // Recriando icone via lucide (gambiarra limpa)
+                els.ctaIcon.setAttribute('data-lucide', 'message-circle');
+            } else {
+                els.modeSiteBtn.className = "flex-1 py-2 text-sm font-bold rounded-md bg-indigo-600 text-white shadow";
+                els.modeWhatsBtn.className = "flex-1 py-2 text-sm font-bold rounded-md text-slate-400 hover:text-white flex items-center justify-center gap-2";
+                els.linkInput.placeholder = "Link do Site";
+                els.linkInput.value = state.siteUrlMemory;
+
+                // Estilo Botão Branco
+                els.previewCtaBtn.className = "flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 bg-white text-slate-950 hover:bg-slate-200 transition-all shadow-lg";
+                els.ctaIcon.setAttribute('data-lucide', 'shopping-bag');
+            }
+            lucide.createIcons();
+            updateTexts();
+        };
+
+        els.modeSiteBtn.addEventListener('click', () => setMode('site'));
+        els.modeWhatsBtn.addEventListener('click', () => setMode('whatsapp'));
+
+
+        // --- FUNÇÃO PRINCIPAL: ATUALIZAR PREVIEW ---
+        window.updatePreview = () => {
+            const img = state.generatedImage || state.productImage || "https://via.placeholder.com/800?text=Aguardando+Imagem";
+            els.previewImage.src = img;
+            
+            if (state.generatedImage) {
+                els.actionsBar.classList.remove('hidden');
+            }
+
+            if (state.logoImage) {
+                els.previewLogoImg.src = state.logoImage;
+                els.previewLogoContainer.classList.remove('hidden');
+                els.previewLogoContainer.classList.add('flex');
+            } else {
+                els.previewLogoContainer.classList.add('hidden');
+            }
+        };
+
+        // --- GERAÇÃO COM GEMINI ---
+        els.generateBtn.addEventListener('click', async () => {
+            if (!state.productImage) {
+                alert("Envie uma foto primeiro!");
+                return;
+            }
+
+            const narrative = document.getElementById('narrative-input').value;
+            els.generateBtn.disabled = true;
+            els.loadingMsg.classList.remove('hidden');
+
+            try {
+                const ai = new GoogleGenAI({ apiKey: state.apiKey });
+                const base64 = state.productImage.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, '');
+                
+                const prompt = `
+                    Generate an image.
+                    Context: High-end product advertisement.
+                    Input: A product image.
+                    User Instruction: "${narrative || "Create a professional ad scene"}"
+                    Task: Place the product in a completely new environment matching the instruction. Keep the product realistic.
+                `;
+
+                const response = await ai.models.generateContent({
+                    model: 'gemini-2.5-flash-image',
+                    contents: {
+                        parts: [
+                            { inlineData: { mimeType: 'image/jpeg', data: base64 } },
+                            { text: prompt }
+                        ]
+                    },
+                    config: {
+                        imageConfig: { aspectRatio: '3:4' }
+                    }
+                });
+
+                // Extração da Imagem
+                let generatedBase64 = '';
+                if (response.candidates?.[0]?.content?.parts) {
+                    for (const part of response.candidates[0].content.parts) {
+                        if (part.inlineData) generatedBase64 = part.inlineData.data;
+                    }
+                }
+
+                if (generatedBase64) {
+                    state.generatedImage = `data:image/jpeg;base64,${generatedBase64}`;
+                    updatePreview();
+                } else {
+                    alert("A IA não retornou imagem. Tente outra descrição.");
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert(`Erro: ${error.message}`);
+            } finally {
+                els.generateBtn.disabled = false;
+                els.loadingMsg.classList.add('hidden');
+            }
+        });
+
+        // --- UTILITÁRIOS ---
+        window.toggleFullscreen = () => {
+            const modal = els.fullscreenModal;
+            if (modal.classList.contains('hidden')) {
+                els.fullscreenImg.src = els.previewImage.src;
+                modal.classList.remove('hidden');
+                modal.classList.add('flex');
+            } else {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            }
+        };
+
+        window.downloadImage = () => {
+            if(!state.generatedImage) return;
+            const link = document.createElement('a');
+            link.href = state.generatedImage;
+            link.download = `bogur-anuncio-${Date.now()}.jpg`;
+            link.click();
+        };
+
+    </script>
+</body>
 </html>
