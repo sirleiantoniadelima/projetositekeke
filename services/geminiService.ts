@@ -2,60 +2,34 @@ import { GoogleGenAI } from "@google/genai";
 import { AdTheme } from "../types";
 
 /**
- * Função otimizada para capturar a API Key no Netlify/Vite.
+ * Função simplificada para capturar a API Key.
+ * Tenta ler de todas as fontes possíveis sem burocracia.
  */
 const getApiKey = (): string | undefined => {
-  // Diagnóstico para ajudar o usuário a debugar no Console do Navegador (F12)
-  console.log("--- DIAGNÓSTICO BOGUR PUBLICIDADE ---");
-  
-  // 1. Tenta VITE (Padrão Netlify / Vite)
+  let key: string | undefined = undefined;
+
+  // 1. Tenta ambiente Vite (Padrão moderno)
   try {
     // @ts-ignore
     if (typeof import.meta !== 'undefined' && import.meta.env) {
-      console.log("Ambiente 'import.meta.env' detectado.");
-      
       // @ts-ignore
-      const viteKey = import.meta.env.VITE_API_KEY;
-      if (viteKey) {
-          console.log("✅ Chave encontrada em VITE_API_KEY");
-          return viteKey;
-      } else {
-          console.log("❌ VITE_API_KEY está vazia ou indefinida.");
-      }
-      
-      // @ts-ignore
-      const metaKey = import.meta.env.API_KEY;
-      if (metaKey) {
-          console.log("⚠️ Chave encontrada em API_KEY (pode não funcionar em produção se não tiver prefixo VITE_).");
-          return metaKey;
-      }
-    } else {
-        console.log("Ambiente 'import.meta.env' NÃO detectado.");
+      key = import.meta.env.VITE_API_KEY || import.meta.env.API_KEY;
     }
-  } catch (e) {
-    console.log("Erro ao ler import.meta:", e);
+  } catch (e) {}
+
+  // 2. Se não achou, tenta ambiente Process (Node/Antigo)
+  if (!key) {
+    try {
+      if (typeof process !== 'undefined' && process.env) {
+        key = process.env.VITE_API_KEY || 
+              process.env.REACT_APP_API_KEY || 
+              process.env.GOOGLE_API_KEY || 
+              process.env.API_KEY;
+      }
+    } catch (e) {}
   }
 
-  // 2. Tenta PROCESS (Fallback para ambientes Node/Webpack antigos)
-  try {
-    if (typeof process !== 'undefined' && process.env) {
-      console.log("Ambiente 'process.env' detectado.");
-      const pKey = process.env.VITE_API_KEY || 
-             process.env.REACT_APP_API_KEY || 
-             process.env.GOOGLE_API_KEY || 
-             process.env.API_KEY;
-      
-      if (pKey) {
-          console.log("✅ Chave encontrada via process.env");
-          return pKey;
-      }
-    }
-  } catch (e) {
-    // Ignora erro se process não existir
-  }
-
-  console.log("❌ NENHUMA CHAVE ENCONTRADA EM LUGAR NENHUM.");
-  return undefined;
+  return key;
 };
 
 /**
@@ -71,28 +45,15 @@ export const generateAdScene = async (
   try {
     const apiKey = getApiKey();
 
+    // Se não tiver chave, lançamos um erro simples orientando
     if (!apiKey) {
         throw new Error(
-            "ERRO CRÍTICO DE CONFIGURAÇÃO (NETLIFY):\n\n" +
-            "A Chave de API não foi encontrada.\n" +
-            "Motivo provável: O nome da variável está errado.\n\n" +
-            "CORREÇÃO:\n" +
-            "1. O Nome (Key) DEVE ser EXATAMENTE: VITE_API_KEY\n" +
-            "   (NÃO use 'EVITE_API_KEY', NÃO use 'API_KEY', NÃO use espaços).\n" +
-            "2. O Valor deve começar com 'AIza...'.\n" +
-            "3. IMPORTANTE: Vá em 'Deploys' > 'Trigger deploy' > 'Clear cache and deploy site' para atualizar."
+            "Chave de API não encontrada. Verifique se VITE_API_KEY está configurada nas variáveis de ambiente do Netlify."
         );
     }
     
-    // Validação extra para formato da chave
-    if (!apiKey.startsWith("AIza")) {
-        throw new Error(
-            "CHAVE INVÁLIDA DETECTADA:\n" +
-            "O aplicativo encontrou uma chave, mas ela não parece ser do Google.\n" +
-            "Sua chave deve começar com as letras 'AIza'.\n" +
-            "Verifique se você não colou texto extra (ex: 'lavoura:') no campo de valor no Netlify."
-        );
-    }
+    // REMOVIDA: A validação 'startsWith("AIza")' que estava travando o app.
+    // Agora passamos a chave direto para o Google. Se estiver errada, o Google avisará.
 
     const ai = new GoogleGenAI({ apiKey });
 
@@ -183,12 +144,6 @@ export const generateAdScene = async (
 
   } catch (error: any) {
     console.error("Gemini API Error:", error);
-    
-    // Repassa o erro original se for algo que já tratamos (como chave ausente)
-    if (error.message && (error.message.includes("API Key") || error.message.includes("Chave de API") || error.message.includes("VITE_API_KEY") || error.message.includes("CHAVE INVÁLIDA"))) {
-        throw error;
-    }
-    
     throw new Error(`Erro na IA: ${error.message || "Falha desconhecida"}`);
   }
 };

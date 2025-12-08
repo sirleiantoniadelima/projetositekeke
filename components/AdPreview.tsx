@@ -79,77 +79,79 @@ export const AdPreview: React.FC<AdPreviewProps> = ({ config, className, showOri
             </button>
         )}
 
-        {/* MOLDURA DO ANÚNCIO (LAYOUT FLEX COLUMN - CARD STYLE) */}
-        <div className={`relative overflow-hidden bg-slate-950 shadow-2xl flex flex-col ${getContainerStyle()} ${device === DeviceFrame.PHONE ? 'rounded-[2rem] border-[8px] border-slate-800' : 'rounded-xl border-[12px] border-slate-800'}`}>
+        {/* CARD DO ANÚNCIO (ESTILO DIVIDIDO - IMAGEM EM CIMA, TEXTO EM BAIXO) */}
+        <div 
+            className={`relative overflow-hidden bg-slate-950 shadow-2xl flex flex-col ${getContainerStyle()} ${device === DeviceFrame.PHONE ? 'rounded-[2rem] border-[8px] border-slate-800' : 'rounded-xl border-[12px] border-slate-800'}`}
+        >
           
-            {/* --- PARTE SUPERIOR: IMAGEM (Flex Grow) --- */}
+            {/* 1. ÁREA DA IMAGEM (Topo - Flex 1 para ocupar o espaço disponível) */}
             <div 
-                className="relative flex-1 bg-slate-200 overflow-hidden cursor-zoom-in"
+                className="relative flex-1 w-full overflow-hidden cursor-zoom-in bg-slate-900"
                 onClick={() => setIsFullscreen(true)}
             >
                 <img 
                     src={displayImage} 
                     alt="Anúncio" 
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-700 hover:scale-105"
                 />
                 
-                {/* Patrocinado (Pequeno Badge na foto) */}
-                <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md text-white text-[9px] font-black uppercase px-2 py-1 rounded border border-white/20">
+                {/* Patrocinado Badge (Dentro da foto) */}
+                <div className="absolute top-3 right-3 z-30 bg-black/40 backdrop-blur-md text-white text-[9px] font-black uppercase px-2 py-1 rounded border border-white/20 pointer-events-none">
                     Patrocinado
                 </div>
             </div>
 
-            {/* --- PARTE INFERIOR: ÁREA LIMPA PARA TEXTO (Rodapé Fixo PRETO) --- */}
+            {/* 2. ÁREA DE TEXTO E AÇÃO (Rodapé - Fixo embaixo) */}
             {!showOriginal && (
-            <div className="bg-slate-950 text-white p-4 sm:p-5 flex flex-col gap-3 shrink-0 border-t border-slate-800 z-30 relative">
-                
-                {/* 1. Logo da Marca (Opcional) */}
-                {logoImage && (
-                    <div className="h-8 mb-1 flex items-center">
-                        <img src={logoImage} alt="Brand Logo" className="h-full object-contain max-w-[120px]" />
-                    </div>
-                )}
-
-                {/* 2. Manchete */}
-                <h2 className="font-black text-white leading-tight break-words text-lg sm:text-xl line-clamp-2">
-                    {headline || "Sua Manchete Aqui"}
-                </h2>
-
-                {/* 3. Botão e Link */}
-                <div className="flex items-center justify-between gap-3 mt-1 w-full">
+                <div className="w-full bg-slate-950 p-5 flex flex-col gap-3 border-t border-slate-900 shrink-0 z-20">
                     
-                    {/* BOTÃO CTA */}
-                    {ctaLink ? (
-                        <a 
-                            href={formattedLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className={`flex-1 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 transition-all shadow-md active:scale-95 hover:brightness-110 ${isWhatsApp ? 'bg-[#25D366] text-white' : 'bg-white text-slate-950 hover:bg-slate-100'}`}
-                        >
-                            {isWhatsApp ? <MessageCircle size={18} fill="white" className="shrink-0" /> : <ShoppingBag size={18} className="shrink-0"/>}
-                            <span className="text-sm uppercase tracking-wide truncate">{ctaText || "Comprar"}</span>
-                        </a>
-                    ) : (
-                        <div className="flex-1 bg-slate-800 text-slate-500 font-bold py-3 px-4 rounded-lg flex items-center justify-center gap-2 cursor-not-allowed border border-slate-700">
-                            <ShoppingBag size={18} />
-                            <span className="text-sm uppercase tracking-wide truncate">{ctaText || "Comprar"}</span>
+                    {/* Logo da Marca */}
+                    {logoImage && (
+                        <div className="h-8 mb-1 flex items-start">
+                            <img src={logoImage} alt="Brand Logo" className="h-full object-contain max-w-[120px]" />
                         </div>
                     )}
+
+                    {/* Manchete */}
+                    <h2 className="font-black text-white leading-tight break-words text-lg sm:text-xl line-clamp-2">
+                        {headline || "Sua Manchete Aqui"}
+                    </h2>
+
+                    {/* Botão e Link */}
+                    <div className="flex items-center justify-between gap-3 mt-1 w-full">
+                        
+                        {/* BOTÃO CTA */}
+                        {ctaLink ? (
+                            <a 
+                                href={formattedLink} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className={`flex-1 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg active:scale-95 hover:brightness-110 border border-white/10 ${isWhatsApp ? 'bg-[#25D366] text-white' : 'bg-white text-slate-950 hover:bg-slate-200'}`}
+                            >
+                                {isWhatsApp ? <MessageCircle size={18} fill="white" className="shrink-0" /> : <ShoppingBag size={18} className="shrink-0"/>}
+                                <span className="text-sm uppercase tracking-wide truncate font-extrabold">{ctaText || "Comprar"}</span>
+                            </a>
+                        ) : (
+                            <div className="flex-1 bg-slate-800 text-slate-500 font-bold py-3 px-4 rounded-xl flex items-center justify-center gap-2 cursor-not-allowed border border-slate-700">
+                                <ShoppingBag size={18} />
+                                <span className="text-sm uppercase tracking-wide truncate">{ctaText || "Comprar"}</span>
+                            </div>
+                        )}
+                        
+                        {/* QR Code (Decorativo) */}
+                        <div className="w-11 h-11 bg-slate-900 rounded-xl flex items-center justify-center text-slate-400 border border-slate-800 shrink-0">
+                            <QrCode size={20} />
+                        </div>
+                    </div>
                     
-                    {/* QR Code ou Ícone Decorativo */}
-                    <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center text-white border border-slate-700 shrink-0">
-                        <QrCode size={20} />
-                    </div>
+                    {/* Link URL Visual */}
+                    {ctaLink && (
+                        <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-medium pl-1">
+                            <ExternalLink size={10} />
+                            <span className="truncate max-w-[200px]">{ctaLink.replace(/^https?:\/\//, '')}</span>
+                        </div>
+                    )}
                 </div>
-                
-                {/* 4. Link URL (Pequeno) */}
-                {ctaLink && (
-                    <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-medium pl-1">
-                        <ExternalLink size={10} />
-                        <span className="truncate max-w-[200px]">{ctaLink.replace(/^https?:\/\//, '')}</span>
-                    </div>
-                )}
-            </div>
             )}
         </div>
       </div>

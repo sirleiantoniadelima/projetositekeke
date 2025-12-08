@@ -94,7 +94,7 @@ const BogurMascot: React.FC<{ className?: string }> = ({ className }) => (
     <circle cx="72" cy="60" r="5" fill="#FCA5A5" opacity="0.6" filter="url(#softShadow)"/>
 
     {/* Nariz 3D */}
-    <path d="M46 56C46 56 50 54 54 56C54 56 52 62 50 62C48 62 46 56 46 56Z" fill="#451A03"/>
+    <path d="M46 56C46 56 50 54 54 56C46 56 52 62 50 62C48 62 46 56 46 56Z" fill="#451A03"/>
     <ellipse cx="50" cy="56.5" rx="2" ry="1" fill="white" opacity="0.3"/>
 
     {/* Boca */}
@@ -206,6 +206,7 @@ const App: React.FC = () => {
 
   const [buttonMode, setButtonMode] = useState<'site' | 'whatsapp'>('site');
   const [whatsappNumber, setWhatsappNumber] = useState('');
+  const [siteUrl, setSiteUrl] = useState('https://minhaloja.com/produto'); // Persistência do link do site
 
   const [history, setHistory] = useState<string[]>([]);
   const [refinePrompt, setRefinePrompt] = useState('');
@@ -264,10 +265,16 @@ const App: React.FC = () => {
   const handleButtonModeChange = (mode: 'site' | 'whatsapp') => {
       setButtonMode(mode);
       if (mode === 'whatsapp') {
-          setConfig(prev => ({ ...prev, ctaText: 'Chamar no WhatsApp' }));
-          updateWhatsappLink(whatsappNumber);
+          // Restaurar o link do WhatsApp se houver número salvo
+          const cleanNumber = whatsappNumber.replace(/\D/g, '');
+          const link = cleanNumber ? `https://wa.me/55${cleanNumber}` : '';
+          setConfig(prev => ({ ...prev, ctaLink: link }));
       } else {
-          setConfig(prev => ({ ...prev, ctaText: 'Comprar Agora', ctaLink: 'https://' }));
+          // Restaurar o link do site salvo
+          setConfig(prev => ({ 
+              ...prev, 
+              ctaLink: siteUrl 
+          }));
       }
   };
 
@@ -622,7 +629,10 @@ const App: React.FC = () => {
                                 <input 
                                     type="text"
                                     value={config.ctaLink}
-                                    onChange={(e) => setConfig({...config, ctaLink: e.target.value})}
+                                    onChange={(e) => {
+                                        setSiteUrl(e.target.value);
+                                        setConfig({...config, ctaLink: e.target.value});
+                                    }}
                                     className="w-full p-3 pl-10 bg-slate-950 border border-slate-800 rounded-lg text-sm text-white focus:ring-2 focus:ring-emerald-500/50 outline-none transition-all"
                                 />
                             )}
@@ -676,6 +686,7 @@ const App: React.FC = () => {
                 <div className="flex-1 flex flex-col items-center">
                     <div className="w-full relative flex justify-center bg-slate-900/50 rounded-2xl border border-slate-800/50 p-4 min-h-[500px] items-center">
                         <AdPreview 
+                            key={config.generatedImage}
                             config={config} 
                             showOriginal={showOriginal}
                             className="" 
